@@ -1,0 +1,21 @@
+{
+  "name": "primevue-mcp",
+  "version": "0.0.1",
+  "scripts": {
+    "scrape-docs": "node ./src/scrapeDocs.mjs"
+  },
+  "keywords": [],
+  "author": "ThreeFlow Engineering <engineering@threeflow.com>",
+  "license": "ISC",
+  "description": "A series of scripts to scrape the PrimeVue documentation and convert it into an MCP-compatible format for use in an LLM.",
+  "dependencies": {
+  },
+  "devDependencies": {
+    "@joplin/turndown": "^4.0.80",
+    "@joplin/turndown-plugin-gfm": "^1.0.62",
+    "cheerio": "^1.0.0",
+    "glob": "^11.0.2",
+    "path": "^0.12.7",
+    "playwright": "^1.52.0"
+  }
+}
