@@ -1,21 +1,35 @@
 {
   "name": "primevue-mcp",
   "version": "0.0.1",
+  "type": "module",
+  "main": "build/mcp-server.js",
+  "bin": {
+    "primevue-mcp": "build/mcp-server.js"
+  },
   "scripts": {
-    "scrape-docs": "node ./src/scrapeDocs.mjs"
+    "scrape": "node src/scrape.mjs",
+    "convert": "node src/convert.mjs",
+    "build": "npm run scrape && npm run convert && tsc",
+    "serve": "node build/server.js",
+    "dev": "tsx src/server.ts"
   },
   "keywords": [],
   "author": "ThreeFlow Engineering <engineering@threeflow.com>",
   "license": "ISC",
-  "description": "A series of scripts to scrape the PrimeVue documentation and convert it into an MCP-compatible format for use in an LLM.",
+  "description": "PrimeVue documentation scraper and MCP server",
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "zod": "^3.25.30"
   },
   "devDependencies": {
     "@joplin/turndown": "^4.0.80",
     "@joplin/turndown-plugin-gfm": "^1.0.62",
+    "@types/node": "^22.15.21",
     "cheerio": "^1.0.0",
     "glob": "^11.0.2",
     "path": "^0.12.7",
-    "playwright": "^1.52.0"
+    "playwright": "^1.52.0",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
   }
 }
