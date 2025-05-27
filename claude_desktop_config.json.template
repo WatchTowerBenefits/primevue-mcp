@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "primevue-dev": {
+      "command": "/Users/youruser/.local/share/mise/installs/node/20.18.3/bin/npx",
+      "args": ["tsx", "/Users/youruser/src/primevue-mcp/src/server.ts", "/Users/youruser/src/primevue-mcp/mcp"],
+      "env": {
+        "PATH": "/Users/youruser/.local/share/mise/installs/node/20.18.3/bin:/usr/local/bin:/usr/bin:/bin"
+      }
+    },
+    "primevue-prod": {
+      "command": "/Users/youruser/.local/share/mise/installs/node/20.18.3/bin/node",
+      "args": ["/Users/youruser/src/primevue-mcp/build/server.js"],
+      "env": {
+        "PATH": "/Users/youruser/.local/share/mise/installs/node/20.18.3/bin:/usr/local/bin:/usr/bin:/bin"
+      }
+    }
+  }
+}

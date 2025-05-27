@@ -1,8 +1,15 @@
-import { chromium } from 'playwright';
+import { chromium, Browser, Page } from 'playwright';
 import fs from 'fs/promises';
 import path from 'path';
 import TurndownService from '@joplin/turndown';
 import { gfm } from '@joplin/turndown-plugin-gfm';
+
+interface LinkInfo {
+  group: string;
+  subcategory?: string;
+  name: string;
+  href: string;
+}
 
 const turndown = new TurndownService({
   headingStyle: 'atx',
@@ -14,9 +21,9 @@ turndown.use(gfm);
 const OUTPUT_DIR = './markdown';
 await fs.mkdir(OUTPUT_DIR, { recursive: true });
 
-const browser = await chromium.launch({ headless: true });
-const sidebarPage = await browser.newPage();
-const contentPage = await browser.newPage();
+const browser: Browser = await chromium.launch({ headless: true });
+const sidebarPage: Page = await browser.newPage();
+const contentPage: Page = await browser.newPage();
 
 console.log('🚀 Loading PrimeVue site...');
 await sidebarPage.goto('https://primevue.org/setup/');
@@ -33,20 +40,24 @@ for (const btn of topLevelButtons) {
 }
 
 // Gather all internal links
-const groupedLinks = await sidebarPage.$$eval('nav > ol > li', (sections) => {
-  const groups = [];
+const groupedLinks: LinkInfo[] = await sidebarPage.$$eval('nav > ol > li', (sections) => {
+  const groups: LinkInfo[] = [];
 
   for (const section of sections) {
     const groupButton = section.querySelector('button span:nth-of-type(2)');
-    const groupName = groupButton ? groupButton.textContent.trim() : null;
+    const groupName = groupButton ? groupButton.textContent?.trim() : null;
 
     const directLinks = section.querySelectorAll(':scope > a[href^="/"]');
     for (const link of directLinks) {
-      groups.push({
-        group: groupName || 'Ungrouped',
-        name: link.textContent.trim(),
-        href: link.getAttribute('href')
-      });
+      const href = link.getAttribute('href');
+      const name = link.textContent?.trim();
+      if (href && name) {
+        groups.push({
+          group: groupName || 'Ungrouped',
+          name,
+          href
+        });
+      }
     }
 
     const submenu = section.querySelector('div > ol');
@@ -55,16 +66,20 @@ const groupedLinks = await sidebarPage.$$eval('nav > ol > li', (sections) => {
     const categories = submenu.querySelectorAll(':scope > li');
     for (const category of categories) {
       const catLabel = category.querySelector('.menu-child-category');
-      const subcategory = catLabel ? catLabel.textContent.trim() : null;
+      const subcategory = catLabel ? catLabel.textContent?.trim() : undefined;
 
       const links = category.querySelectorAll('a[href^="/"]');
       for (const link of links) {
-        groups.push({
-          group: groupName || 'Ungrouped',
-          subcategory,
-          name: link.textContent.trim(),
-          href: link.getAttribute('href')
-        });
+        const href = link.getAttribute('href');
+        const name = link.textContent?.trim();
+        if (href && name) {
+          groups.push({
+            group: groupName || 'Ungrouped',
+            subcategory,
+            name,
+            href
+          });
+        }
       }
     }
   }
@@ -74,7 +89,7 @@ const groupedLinks = await sidebarPage.$$eval('nav > ol > li', (sections) => {
 
 console.log(`📄 Found ${groupedLinks.length} pages to scrape`);
 
-const useGotoPaths = [
+const useGotoPaths: string[] = [
   '/introduction/',
   '/setup/',
   '/playground/',
@@ -112,29 +127,29 @@ for (const { group, subcategory, name, href } of groupedLinks) {
     }
 
     const hasTabs = await pageToUse.$('.doc-tabmenu') !== null;
-    let markdownSections = [];
+    const markdownSections: string[] = [];
 
     if (hasTabs) {
-      const tabLabels = await pageToUse.$$eval('.doc-tabmenu li button', btns =>
-        btns.map(btn => btn.textContent.trim())
+      const tabLabels = await pageToUse.$$eval('.doc-tabmenu li button', (btns) =>
+        btns.map((btn) => btn.textContent?.trim() || '')
       );
       const tabPanels = await pageToUse.$$('.doc-tabpanels > .doc-tabpanel');
 
       for (let i = 0; i < tabPanels.length; i++) {
-        const html = await tabPanels[i].evaluate(el => el.innerHTML);
+        const html = await tabPanels[i].evaluate((el) => el.innerHTML);
         const markdown = turndown.turndown(html);
         markdownSections.push(`### ${tabLabels[i] || `Tab ${i + 1}`}` + '\n\n' + markdown);
       }
     } else {
       const docDiv = await pageToUse.$('.doc');
-      let docHtml = null;
+      let docHtml: string | null = null;
 
       if (docDiv) {
-        docHtml = await docDiv.evaluate(el => el.innerHTML);
+        docHtml = await docDiv.evaluate((el) => el.innerHTML);
       } else {
         const content = await pageToUse.$('.layout-content-slot');
         if (content) {
-          docHtml = await content.evaluate(el => el.innerHTML);
+          docHtml = await content.evaluate((el) => el.innerHTML);
         }
       }
 
@@ -146,16 +161,15 @@ for (const { group, subcategory, name, href } of groupedLinks) {
       }
     }
 
-    const md = [
-      ...markdownSections
-    ].join('\n\n');
+    const md = markdownSections.join('\n\n');
 
     const safeName = name.toLowerCase().replace(/\s+/g, '-');
     const filePath = path.join(groupDir, `${safeName}.md`);
     await fs.writeFile(filePath, md, 'utf-8');
     console.log(`✅ Saved: ${path.relative('.', filePath)}`);
   } catch (err) {
-    console.error(`❌ Failed to scrape ${name} (${url}):`, err.message);
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    console.error(`❌ Failed to scrape ${name} (${url}):`, errorMessage);
   }
 }
 

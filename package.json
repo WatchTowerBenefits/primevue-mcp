@@ -7,8 +7,8 @@
     "primevue-mcp": "build/mcp-server.js"
   },
   "scripts": {
-    "scrape": "node src/scrape.mjs",
-    "convert": "node src/convert.mjs",
+    "scrape": "tsx src/scrape.ts",
+    "convert": "tsx src/convert.ts",
     "build": "npm run scrape && npm run convert && tsc",
     "serve": "node build/server.js",
     "dev": "tsx src/server.ts"
